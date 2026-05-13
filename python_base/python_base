@@ -1,0 +1,78 @@
+#!/bin/bash
+
+export MY_UID=$(id -u)
+export MY_GID=$(id -g)
+export MY_USER=$USER
+export MY_GROUP=$(id -gn)
+
+SERVICE_NAME="python_base"
+
+export REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+export IMAGE_NAME=$SERVICE_NAME
+export CONTAINER_NAME=$SERVICE_NAME
+
+source $REPO/python_v
+
+######################################################
+
+function nuke() {
+    docker container prune -f
+    docker images --filter "dangling=true" -q | xargs -r docker rmi
+    docker volume prune -f
+    docker builder prune -a -f
+}
+
+function up() {
+    docker compose -f "$REPO/docker-compose.yml" up -d --no-build ${SERVICE_NAME}
+}
+
+function down() {
+    docker compose -f "$REPO/docker-compose.yml" down
+}
+
+function restart() {
+    down
+    up
+}
+
+function shell() {
+    docker compose -f "$REPO/docker-compose.yml" exec ${SERVICE_NAME} bash
+}
+
+function purge() {
+    docker compose -f "$REPO/docker-compose.yml" down --rmi all --volumes --remove-orphans
+}
+
+function build() {
+    purge
+    docker compose -f "$REPO/docker-compose.yml" build --no-cache ${SERVICE_NAME}
+    nuke
+}
+
+function logs() {
+    docker compose -f "$REPO/docker-compose.yml" logs -f ${SERVICE_NAME}
+}
+
+function env_var() {
+    docker inspect ${CONTAINER_NAME} 2>/dev/null | jq '.[0].Config.Env'
+}
+
+function passthrough() {
+    docker compose -f "$REPO/docker-compose.yml" exec ${SERVICE_NAME} "$@"
+}
+
+######################################################
+
+case "$1" in
+    nuke)       nuke ;;
+    up)         up ;;
+    down)       down ;;
+    restart)    restart ;;
+    shell)      shell ;;
+    purge)      purge ;;
+    build)      build ;;
+    logs)       logs ;;
+    env_var)    env_var ;;
+    *)
+    passthrough "$@" ;;
+esac

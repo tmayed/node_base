@@ -1,0 +1,2 @@
+#!/bin/bash
+export PYTHON_V="3.14.4"
