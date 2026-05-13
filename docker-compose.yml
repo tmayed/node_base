@@ -1,0 +1,15 @@
+services:
+  node_base:
+    build:
+      context: ${REPO}
+      dockerfile: Dockerfile
+      args:
+        MY_UID: ${MY_UID}
+        MY_GID: ${MY_GID}
+        MY_USER: ${MY_USER}
+        MY_GROUP: ${MY_GROUP}
+        NODE_VERSION: ${NODE_VERSION}
+    image: ${IMAGE_NAME}
+    container_name: ${CONTAINER_NAME}
+    stdin_open: true
+    tty: true
